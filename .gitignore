@@ -1,0 +1,16 @@
+node_modules
+dist
+.env
+*.local
+*.log
+*.tmp
+*.bak
+*.swp
+Thumbs.db
+.DS_Store
+desktop.ini
+deploy*.js
+deploy*.mjs
+deploy*.cjs
+deploy*.py
+*.bat
