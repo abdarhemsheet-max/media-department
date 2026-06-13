@@ -6,135 +6,291 @@ interface ReportCardProps {
 }
 
 function getSerialNumber(report: Omit<AchievementReport, 'id' | 'createdAt'> & { id?: string }) {
-  if (!report) return 'م-إ/20260613/NEW';
+  if (!report) return 'REP-20260613-NEW';
   const dateStr = report.date ? report.date.replace(/-/g, '') : '20260613';
   const cleanId = report.id ? report.id.substring(0, 4).toUpperCase() : 'NEW';
-  return `م-إ/${dateStr}/${cleanId}`;
+  return `REP-${dateStr}-${cleanId}`;
+}
+
+function formatDate(dateStr: string) {
+  if (!dateStr) return '—';
+  const [y, m, d] = dateStr.split('-');
+  return `${y}/${parseInt(m)}/${parseInt(d)}`;
 }
 
 export default function ReportCard({ report, fontFamily = 'Cairo' }: ReportCardProps) {
   if (!report) return null;
 
+  const colleaguesText =
+    report.colleagues && report.colleagues.length > 0
+      ? ` (بمشاركة: ${report.colleagues.join('، ')})`
+      : '';
+
   return (
     <div
-      className="w-full max-w-[210mm] bg-white text-slate-800 p-8 md:p-12 shadow-2xl border-t-8 border-indigo-600 relative rounded-2xl"
+      className="w-full max-w-[210mm] bg-white"
       dir="rtl"
-      style={{ fontFamily: `'${fontFamily}', sans-serif`, color: '#1e293b' }}
+      style={{ fontFamily: `'${fontFamily}', sans-serif`, color: '#1a1a1a' }}
     >
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-center sm:items-start border-b-2 border-slate-200 pb-6 mb-6 gap-4">
-        <div className="text-right space-y-1">
-          <h3 className="font-extrabold text-base text-slate-900">مكتب أوقاف القره بوللي</h3>
-          <h4 className="font-bold text-sm text-slate-500">قسم الإعلام والاتصال</h4>
-        </div>
-        <div className="text-center self-center py-1">
-          <h1 className="text-2xl md:text-3xl font-extrabold text-[#0f172a] border-b-4 border-indigo-600 pb-1.5 px-4 rounded-md">تقرير إنجاز</h1>
-        </div>
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col gap-1.5 min-w-[210px] text-right">
-          <div className="flex justify-between text-xs">
-            <span className="font-bold text-slate-400">اليوم:</span>
-            <span className="font-bold text-slate-800">{report.day || 'الأحد'}</span>
+      <div className="p-8 md:p-10">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-5">
+          <div className="text-right font-bold text-base leading-relaxed">
+            <div>مكتب أوقاف القره بوللي</div>
+            <div>قسم الإعلام</div>
           </div>
-          <div className="flex justify-between text-xs">
-            <span className="font-bold text-slate-400">التاريخ:</span>
-            <span className="font-bold text-slate-800">{report.date || '2026-06-13'}</span>
+          <div className="text-center flex-1">
+            <h1
+              className="text-3xl font-extrabold tracking-tight"
+              style={{ letterSpacing: '-0.5px' }}
+            >
+              تقرير إنجاز
+            </h1>
           </div>
-          <div className="flex justify-between text-xs">
-            <span className="font-bold text-slate-400">الرقم الإشاري:</span>
-            <span className="font-mono font-bold text-indigo-700 text-[11px]">{getSerialNumber(report)}</span>
+          <div className="text-left shrink-0">
+            <table
+              className="border-collapse text-xs w-[150px]"
+              style={{ borderCollapse: 'collapse' }}
+            >
+              <tbody>
+                <tr>
+                  <th
+                    className="font-bold px-2 py-1 text-center w-[50px]"
+                    style={{
+                      border: '1px solid #333',
+                      backgroundColor: '#fdfdfd',
+                    }}
+                  >
+                    اليوم
+                  </th>
+                  <td
+                    className="font-semibold px-2 py-1 text-center"
+                    style={{ border: '1px solid #333' }}
+                  >
+                    {report.day || '—'}
+                  </td>
+                </tr>
+                <tr>
+                  <th
+                    className="font-bold px-2 py-1 text-center"
+                    style={{
+                      border: '1px solid #333',
+                      backgroundColor: '#fdfdfd',
+                    }}
+                  >
+                    التاريخ
+                  </th>
+                  <td
+                    className="font-semibold px-2 py-1 text-center"
+                    style={{ border: '1px solid #333' }}
+                  >
+                    {report.date ? formatDate(report.date) : '—'}
+                  </td>
+                </tr>
+                <tr>
+                  <th
+                    className="font-bold px-2 py-1 text-center"
+                    style={{
+                      border: '1px solid #333',
+                      backgroundColor: '#fdfdfd',
+                    }}
+                  >
+                    الرقم
+                  </th>
+                  <td
+                    className="font-semibold px-2 py-1 text-center font-mono"
+                    style={{
+                      border: '1px solid #333',
+                      fontSize: '11px',
+                    }}
+                  >
+                    {getSerialNumber(report)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
 
-      {/* Content Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        <div className="bg-white border border-slate-200 rounded-xl p-4 sm:col-span-2">
-          <div className="text-xs font-bold text-sky-600 mb-1">اسم الموظف المكلّف</div>
-          <div className="text-base font-bold text-slate-800">{report.employeeName || 'غير مدرج'}</div>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <div className="text-xs font-bold text-sky-600 mb-1">تاريخ الإنجاز</div>
-          <div className="text-sm font-semibold text-slate-700">
-            {report.date || '2026-06-13'}
-            <span className="text-xs text-slate-400 font-normal"> ({report.day || 'الأحد'})</span>
-          </div>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <div className="text-xs font-bold text-sky-600 mb-1">مكان العمل / التنفيذ</div>
-          <div className="text-sm font-semibold text-slate-700">{report.location || 'غير محدد'}</div>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <div className="text-xs font-bold text-sky-600 mb-1">نوع العمل / النشاط</div>
-          <div className="text-sm font-semibold text-slate-700">{report.taskType || 'مهمة عمل'}</div>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4">
-          <div className="text-xs font-bold text-sky-600 mb-1">حالة الإنجاز المعتمد</div>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-lg font-extrabold text-emerald-600">100%</span>
-            <span className="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2 py-0.5 rounded-full">
-              {report.status === 'معتمد' ? 'معتمد ومؤرشف' : 'تحت المراجعة'}
-            </span>
-          </div>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 sm:col-span-2">
-          <div className="text-xs font-bold text-sky-600 mb-1">تفاصيل وعناصر الإنجاز</div>
-          <div className="text-sm font-medium text-slate-700 leading-relaxed text-justify whitespace-pre-wrap min-h-[100px] pt-1">
-            {report.details || 'لا توجد تفاصيل مدرجة.'}
-          </div>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 sm:col-span-2">
-          <div className="text-xs font-bold text-sky-600 mb-1">الزملاء المشاركون</div>
-          {report.colleagues && report.colleagues.length > 0 ? (
-            <div className="flex flex-wrap gap-2 pt-1">
-              {report.colleagues.map((colleague, idx) => (
-                <span key={idx} className="bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-black px-3 py-1 rounded-full">
-                  ✓ {colleague}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-slate-400 italic pt-1">تم إنجاز العمل بشكل فردي.</p>
-          )}
-        </div>
-        {report.notes && (
-          <div className="bg-white border border-slate-200 rounded-xl p-4 sm:col-span-2">
-            <div className="text-xs font-bold text-slate-500 mb-1">ملاحظات</div>
-            <p className="text-xs text-slate-600 bg-amber-50/50 border border-amber-200 p-3 rounded-lg whitespace-pre-wrap">
-              {report.notes}
-            </p>
-          </div>
-        )}
-      </div>
+        <hr
+          className="border-none my-5"
+          style={{ borderTop: '2px solid #333', margin: '20px 0 30px' }}
+        />
 
-      {/* Signature + Stamp */}
-      <div className="mt-12 pt-8 border-t border-slate-200 grid grid-cols-2 gap-4 relative">
-        <div className="absolute top-0 left-1/3 p-1 select-none pointer-events-none opacity-90">
-          <div className="w-28 h-28 rounded-full border-4 border-dashed border-indigo-700/80 p-1 flex items-center justify-center rotate-[-12deg]">
-            <div className="w-full h-full rounded-full border-2 border-indigo-700/80 flex flex-col items-center justify-center text-center text-indigo-700/80 p-1 font-bold">
-              <span className="text-[5px] uppercase tracking-tighter">Awqaf Al-Garabulli</span>
-              <span className="text-[7px] font-extrabold my-0.5">مكتب أوقاف القره بوللي</span>
-              <span className="text-[8px] tracking-wide font-extrabold text-indigo-900/90 bg-white px-1">مُعــتـمَـد</span>
-              <span className="text-[6px] tracking-tight mt-0.5">قسم الإعلام والاتصال</span>
-            </div>
+        {/* Main Table */}
+        <table
+          className="w-full mb-10"
+          style={{ borderCollapse: 'collapse', fontSize: '15px' }}
+        >
+          <tbody>
+            <tr>
+              <th
+                className="font-bold px-4 py-3 text-center align-middle"
+                style={{
+                  border: '1px solid #333',
+                  backgroundColor: '#fdfdfd',
+                  width: '25%',
+                  fontSize: '16px',
+                }}
+              >
+                اسم الموظف
+              </th>
+              <td
+                className="font-semibold px-4 py-3 text-center align-middle"
+                style={{ border: '1px solid #333', width: '75%' }}
+              >
+                {report.employeeName || 'غير مدرج'}
+                {colleaguesText}
+              </td>
+            </tr>
+            <tr>
+              <th
+                className="font-bold px-4 py-3 text-center align-middle"
+                style={{
+                  border: '1px solid #333',
+                  backgroundColor: '#fdfdfd',
+                  fontSize: '16px',
+                }}
+              >
+                تاريخ الإنجاز
+              </th>
+              <td
+                className="font-semibold px-4 py-3 text-center align-middle"
+                style={{ border: '1px solid #333' }}
+              >
+                {report.date || '—'}
+              </td>
+            </tr>
+            <tr>
+              <th
+                className="font-bold px-4 py-3 text-center align-middle"
+                style={{
+                  border: '1px solid #333',
+                  backgroundColor: '#fdfdfd',
+                  fontSize: '16px',
+                }}
+              >
+                اليوم
+              </th>
+              <td
+                className="font-semibold px-4 py-3 text-center align-middle"
+                style={{ border: '1px solid #333' }}
+              >
+                {report.day || '—'}
+              </td>
+            </tr>
+            <tr>
+              <th
+                className="font-bold px-4 py-3 text-center align-middle"
+                style={{
+                  border: '1px solid #333',
+                  backgroundColor: '#fdfdfd',
+                  fontSize: '16px',
+                }}
+              >
+                مكان العمل
+              </th>
+              <td
+                className="font-semibold px-4 py-3 text-center align-middle"
+                style={{ border: '1px solid #333' }}
+              >
+                {report.location || '—'}
+              </td>
+            </tr>
+            <tr>
+              <th
+                className="font-bold px-4 py-3 text-center align-middle"
+                style={{
+                  border: '1px solid #333',
+                  backgroundColor: '#fdfdfd',
+                  fontSize: '16px',
+                }}
+              >
+                نوع العمل
+              </th>
+              <td
+                className="font-semibold px-4 py-3 text-center align-middle"
+                style={{ border: '1px solid #333' }}
+              >
+                {report.taskType || '—'}
+              </td>
+            </tr>
+            <tr>
+              <th
+                className="font-bold px-4 py-3 text-center align-middle"
+                style={{
+                  border: '1px solid #333',
+                  backgroundColor: '#fdfdfd',
+                  fontSize: '16px',
+                }}
+              >
+                نسبة الإنجاز
+              </th>
+              <td
+                className="font-semibold px-4 py-3 text-center align-middle font-extrabold"
+                style={{
+                  border: '1px solid #333',
+                  color: '#059669',
+                }}
+              >
+                100%
+              </td>
+            </tr>
+            <tr>
+              <th
+                className="font-bold px-4 py-3 text-center align-middle"
+                style={{
+                  border: '1px solid #333',
+                  backgroundColor: '#fdfdfd',
+                  fontSize: '16px',
+                }}
+              >
+                تفاصيل الإنجاز
+              </th>
+              <td
+                className="font-semibold px-4 py-3 text-center align-middle whitespace-pre-wrap leading-relaxed"
+                style={{
+                  border: '1px solid #333',
+                  textAlign: 'justify',
+                  textJustify: 'inter-word',
+                }}
+              >
+                {report.details || 'لا توجد تفاصيل'}
+              </td>
+            </tr>
+            <tr>
+              <th
+                className="font-bold px-4 py-3 text-center align-middle"
+                style={{
+                  border: '1px solid #333',
+                  backgroundColor: '#fdfdfd',
+                  fontSize: '16px',
+                }}
+              >
+                ملاحظات
+              </th>
+              <td
+                className="font-semibold px-4 py-3 text-center align-middle"
+                style={{ border: '1px solid #333' }}
+              >
+                {report.notes || 'لا يوجد'}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Signatures */}
+        <div
+          className="flex justify-between mt-12 px-5"
+          style={{ marginTop: '50px' }}
+        >
+          <div className="font-bold text-lg text-center">
+            توقيع رئيس القسم
+          </div>
+          <div className="font-bold text-lg text-center">
+            توقيع الموظف
           </div>
         </div>
-        <div className="text-right space-y-1">
-          <span className="text-xs text-slate-400 block font-bold">توقيع ومقدم التقرير المكلّف:</span>
-          <span className="font-bold text-slate-800 text-sm block">{report.employeeName}</span>
-          <span className="text-[11px] text-slate-400 italic block">توقيع رقمي مأذون</span>
-        </div>
-        <div className="text-left space-y-1">
-          <span className="text-xs text-slate-400 block font-bold text-left">اعتماد رئيس القسم والمدير:</span>
-          <span className="font-bold text-slate-800 text-sm block text-left">قسم الإعلام والتوثيق</span>
-          <span className="text-[11px] text-slate-400 italic block text-left">مؤرشف وموثق رقمياً</span>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="mt-10 pt-4 border-t border-slate-100 text-center text-[10px] text-slate-400 flex justify-between items-center">
-        <span>قسم الإعلام والاتصال بمكتب أوقاف القره بوللي</span>
-        <span className="font-mono">الصفحة 1 من 1</span>
-        <span>تاريخ الطباعة الرقمية: {new Date().toLocaleDateString('ar-LY')}</span>
       </div>
     </div>
   );

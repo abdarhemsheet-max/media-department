@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { FileText, Eye, Trash2, RefreshCw, ShieldCheck, Search, Users, BarChart3, Archive, CheckCircle2, Clock, AlertTriangle, ChevronLeft } from 'lucide-react';
-import { AchievementReport } from '../types';
+import { useState, useEffect } from 'react';
+import { FileText, Eye, Trash2, RefreshCw, ShieldCheck, Search, Users, BarChart3, Archive, CheckCircle2, Clock, AlertTriangle, ChevronLeft, ClipboardList } from 'lucide-react';
+import { AchievementReport, Assignment } from '../types';
 import { dbService } from '../lib/supabase';
 import PDFPreviewModal from './PDFPreviewModal';
+import AssignmentPreviewModal from './AssignmentPreviewModal';
 
 interface ManagerDashboardProps {
   reports: AchievementReport[];
@@ -12,7 +13,7 @@ interface ManagerDashboardProps {
   addToast: (type: 'success' | 'error' | 'info', message: string) => void;
 }
 
-type TabKey = 'dashboard' | 'reports' | 'archive';
+type TabKey = 'dashboard' | 'reports' | 'archive' | 'assignments';
 type FilterStatus = 'all' | 'معتمد' | 'تحت المراجعة';
 
 export default function ManagerDashboard({ reports, loading, isAuthenticated, onRefresh, addToast }: ManagerDashboardProps) {
@@ -21,6 +22,27 @@ export default function ManagerDashboard({ reports, loading, isAuthenticated, on
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [previewReport, setPreviewReport] = useState<(Omit<AchievementReport, 'id' | 'createdAt'> & { id?: string }) | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [assignmentsLoading, setAssignmentsLoading] = useState(false);
+  const [previewAssignment, setPreviewAssignment] = useState<Assignment | null>(null);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadAssignments();
+    }
+  }, [isAuthenticated]);
+
+  const loadAssignments = async () => {
+    setAssignmentsLoading(true);
+    try {
+      const data = await dbService.getAssignments();
+      setAssignments(data.filter(Boolean));
+    } catch {
+      setAssignments([]);
+    } finally {
+      setAssignmentsLoading(false);
+    }
+  };
 
   const validReports = reports.filter(Boolean);
 
@@ -60,6 +82,7 @@ export default function ManagerDashboard({ reports, loading, isAuthenticated, on
     { key: 'dashboard', label: 'الرئيسية', icon: BarChart3 },
     { key: 'reports', label: 'التقارير', icon: FileText, count: filteredReports.length },
     { key: 'archive', label: 'الأرشيف', icon: Archive, count: validReports.length },
+    { key: 'assignments', label: 'التكليفات', icon: ClipboardList, count: isAuthenticated ? assignments.length : undefined },
   ];
 
   return (
@@ -388,13 +411,134 @@ export default function ManagerDashboard({ reports, loading, isAuthenticated, on
         </>
       )}
 
-      {/* Preview Modal */}
+      {/* ===================== ASSIGNMENTS TAB ===================== */}
+      {activeTab === 'assignments' && (
+        <>
+          <div className="backdrop-blur-xl bg-[#0B0F19]/50 border border-white/10 rounded-2xl p-4 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <ClipboardList className="w-4 h-4 text-indigo-400" />
+                رسائل التكليف
+              </h3>
+              <button
+                onClick={loadAssignments}
+                className="flex items-center gap-1.5 px-3 py-2 bg-[#0B0F19]/40 hover:bg-white/5 border border-white/10 rounded-xl text-xs font-semibold text-slate-300 transition-all"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${assignmentsLoading ? 'animate-spin' : ''}`} />
+                <span>تحديث</span>
+              </button>
+            </div>
+          </div>
+
+          {!isAuthenticated ? (
+            <div className="backdrop-blur-xl bg-amber-600/10 border border-amber-500/20 rounded-2xl p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-500/10 rounded-xl">
+                  <AlertTriangle className="w-5 h-5 text-amber-400" />
+                </div>
+                <p className="text-sm font-bold text-amber-200">
+                  يرجى تسجيل الدخول لعرض التكليفات
+                </p>
+              </div>
+            </div>
+          ) : assignmentsLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-48 bg-white/5 rounded-2xl animate-pulse" />
+              ))}
+            </div>
+          ) : assignments.length === 0 ? (
+            <div className="text-center py-16 text-slate-500">
+              <ClipboardList className="w-16 h-16 mx-auto mb-4 opacity-20" />
+              <p className="text-base font-bold">لا توجد تكليفات</p>
+              <p className="text-sm mt-1">سيتم عرض التكليفات هنا عند إضافتها</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {assignments.map((assignment) => (
+                <div
+                  key={assignment.id}
+                  className="backdrop-blur-xl bg-[#0B0F19]/50 border border-white/10 rounded-2xl p-5 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] flex flex-col"
+                >
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-indigo-600/20 text-indigo-300 border border-indigo-500/20 flex items-center justify-center text-sm font-bold shrink-0">
+                      {assignment.primaryEmployee?.charAt(0) || '?'}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-white">
+                        {assignment.primaryEmployee}
+                      </p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        {assignment.targetDate}
+                      </p>
+                    </div>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 border ${
+                        assignment.status === 'مكتمل'
+                          ? 'bg-emerald-600/15 text-emerald-300 border-emerald-500/20'
+                          : assignment.status === 'قيد التنفيذ'
+                          ? 'bg-blue-600/15 text-blue-300 border-blue-500/20'
+                          : 'bg-amber-600/15 text-amber-300 border-amber-500/20'
+                      }`}
+                    >
+                      {assignment.status}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-slate-300 mb-2 line-clamp-2">
+                    {assignment.taskType}
+                  </p>
+                  <p className="text-[11px] text-slate-500 mb-3">
+                    {assignment.location}
+                  </p>
+
+                  {assignment.coEmployees && assignment.coEmployees.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {assignment.coEmployees.slice(0, 3).map((c, i) => (
+                        <span
+                          key={i}
+                          className="text-[9px] bg-white/5 text-slate-400 px-1.5 py-0.5 rounded-full"
+                        >
+                          {c}
+                        </span>
+                      ))}
+                      {assignment.coEmployees.length > 3 && (
+                        <span className="text-[9px] text-slate-500">
+                          +{assignment.coEmployees.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="mt-auto pt-3 border-t border-white/5 flex gap-2">
+                    <button
+                      onClick={() => setPreviewAssignment(assignment)}
+                      className="flex-1 px-3 py-2 bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/20 text-indigo-300 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>عرض خطاب التكليف</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Preview Modals */}
       {previewReport && (
         <PDFPreviewModal
           report={previewReport}
           onClose={() => setPreviewReport(null)}
           onAuthorizeAndSave={previewReport.id ? () => handleAuthorize(previewReport as AchievementReport) : undefined}
           isViewOnly={!isAuthenticated}
+        />
+      )}
+      {previewAssignment && (
+        <AssignmentPreviewModal
+          assignment={previewAssignment}
+          onClose={() => setPreviewAssignment(null)}
         />
       )}
     </div>
