@@ -1,7 +1,8 @@
 import { useState, FormEvent } from 'react';
-import { Send, Plus, Users, CalendarDays, MapPin, FileText, AlignRight, StickyNote, UserCircle, ListChecks } from 'lucide-react';
+import { Send, Plus, Users, CalendarDays, MapPin, FileText, AlignRight, StickyNote, UserCircle, ListChecks, Eye, CheckCircle2, PlusCircle } from 'lucide-react';
 import { AchievementReport, PRESET_EMPLOYEES, PRESET_TASK_TYPES } from '../types';
 import ColleaguesModal from './ColleaguesModal';
+import ReportCard from './ReportCard';
 
 interface ReportFormProps {
   onSave: (report: Omit<AchievementReport, 'id' | 'createdAt'>) => void;
@@ -31,6 +32,7 @@ export default function ReportForm({ onSave }: ReportFormProps) {
   const [colleagues, setColleagues] = useState<string[]>([]);
   const [showColleaguesModal, setShowColleaguesModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submittedReport, setSubmittedReport] = useState<Omit<AchievementReport, 'id' | 'createdAt'> | null>(null);
 
   const day = getDayFromDate(date);
 
@@ -39,26 +41,65 @@ export default function ReportForm({ onSave }: ReportFormProps) {
     if (!employeeName || !taskType || !location || !details) return;
 
     setSubmitting(true);
+    const reportData: Omit<AchievementReport, 'id' | 'createdAt'> = {
+      employeeName, date, taskType, day, location, details, notes, colleagues, status: 'تحت المراجعة'
+    };
     try {
-      await onSave({ employeeName, date, taskType, day, location, details, notes, colleagues, status: 'تحت المراجعة' });
-      setEmployeeName('');
-      setDate(todayStr());
-      setTaskType('');
-      setLocation('');
-      setDetails('');
-      setNotes('');
-      setColleagues([]);
+      await onSave(reportData);
+      setSubmittedReport(reportData);
     } finally {
       setSubmitting(false);
     }
   };
 
+  const handleNewReport = () => {
+    setSubmittedReport(null);
+    setEmployeeName('');
+    setDate(todayStr());
+    setTaskType('');
+    setLocation('');
+    setDetails('');
+    setNotes('');
+    setColleagues([]);
+  };
+
   const isFormValid = employeeName && taskType && location && details;
+
+  if (submittedReport) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="backdrop-blur-xl bg-emerald-600/10 border border-emerald-500/20 rounded-2xl p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-emerald-500/10 rounded-xl">
+              <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-base font-bold text-emerald-200">تم تقديم التقرير بنجاح</h2>
+              <p className="text-xs text-emerald-300/70">التقرير قيد المراجعة من قبل مدير القسم</p>
+            </div>
+            <button onClick={handleNewReport} className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-blue-600/25 border border-blue-500/30">
+              <PlusCircle className="w-4 h-4" />
+              <span>تقرير جديد</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="backdrop-blur-xl bg-[#0B0F19]/50 border border-white/10 rounded-2xl p-5 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-white/5">
+            <Eye className="w-4 h-4 text-blue-400" />
+            <span className="text-sm font-bold text-white">معاينة التقرير المُرسَل</span>
+          </div>
+          <div className="flex justify-center">
+            <ReportCard report={submittedReport} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto">
       <div className="backdrop-blur-xl bg-[#0B0F19]/50 border border-white/10 rounded-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] p-5 sm:p-7">
-        {/* Header */}
         <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
           <div className="p-2.5 bg-gradient-to-br from-blue-600/30 to-indigo-600/30 rounded-xl border border-white/10">
             <FileText className="w-5 h-5 text-blue-400" />
@@ -70,9 +111,7 @@ export default function ReportForm({ onSave }: ReportFormProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Row 1: Employee + Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Employee Name */}
             <div className="space-y-1.5">
               <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-300">
                 <UserCircle className="w-3.5 h-3.5 text-blue-400" />
@@ -86,7 +125,6 @@ export default function ReportForm({ onSave }: ReportFormProps) {
               </select>
             </div>
 
-            {/* Date */}
             <div className="space-y-1.5">
               <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-300">
                 <CalendarDays className="w-3.5 h-3.5 text-emerald-400" />
@@ -99,9 +137,7 @@ export default function ReportForm({ onSave }: ReportFormProps) {
             </div>
           </div>
 
-          {/* Row 2: Task Type + Location */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Task Type */}
             <div className="space-y-1.5">
               <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-300">
                 <ListChecks className="w-3.5 h-3.5 text-indigo-400" />
@@ -115,7 +151,6 @@ export default function ReportForm({ onSave }: ReportFormProps) {
               </select>
             </div>
 
-            {/* Location */}
             <div className="space-y-1.5">
               <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-300">
                 <MapPin className="w-3.5 h-3.5 text-rose-400" />
@@ -125,7 +160,6 @@ export default function ReportForm({ onSave }: ReportFormProps) {
             </div>
           </div>
 
-          {/* Details */}
           <div className="space-y-1.5">
             <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-300">
               <AlignRight className="w-3.5 h-3.5 text-sky-400" />
@@ -134,7 +168,6 @@ export default function ReportForm({ onSave }: ReportFormProps) {
             <textarea value={details} onChange={e => setDetails(e.target.value)} rows={5} placeholder="صف تفاصيل الإنجاز الذي قمت به اليوم بدقة..." className="w-full bg-[#0B0F19]/60 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors resize-none" />
           </div>
 
-          {/* Colleagues */}
           <div className="space-y-1.5">
             <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-300">
               <Users className="w-3.5 h-3.5 text-violet-400" />
@@ -157,7 +190,6 @@ export default function ReportForm({ onSave }: ReportFormProps) {
             </div>
           </div>
 
-          {/* Notes */}
           <div className="space-y-1.5">
             <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-300">
               <StickyNote className="w-3.5 h-3.5 text-amber-400" />
@@ -166,7 +198,6 @@ export default function ReportForm({ onSave }: ReportFormProps) {
             <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="أي ملاحظات إضافية تود إرفاقها..." className="w-full bg-[#0B0F19]/60 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors resize-none" />
           </div>
 
-          {/* Submit */}
           <button type="submit" disabled={!isFormValid || submitting} className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${isFormValid && !submitting ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-600/25 border border-blue-500/30' : 'bg-[#0B0F19]/60 text-slate-500 border border-white/5 cursor-not-allowed'}`}>
             {submitting ? (
               <><svg className="animate-spin w-4 h-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg><span>جاري حفظ التقرير...</span></>
@@ -177,7 +208,6 @@ export default function ReportForm({ onSave }: ReportFormProps) {
         </form>
       </div>
 
-      {/* Colleagues Modal */}
       {showColleaguesModal && (
         <ColleaguesModal
           selectedColleagues={colleagues}
